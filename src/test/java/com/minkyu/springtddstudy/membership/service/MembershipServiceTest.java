@@ -1,6 +1,7 @@
 package com.minkyu.springtddstudy.membership.service;
 
 import com.minkyu.springtddstudy.domain.membership.constant.MembershipType;
+import com.minkyu.springtddstudy.domain.membership.dto.MembershipResponse;
 import com.minkyu.springtddstudy.domain.membership.error.MembershipErrorResult;
 import com.minkyu.springtddstudy.domain.membership.error.MembershipException;
 import com.minkyu.springtddstudy.domain.membership.model.Membership;
@@ -71,7 +72,7 @@ public class MembershipServiceTest {
         doReturn(membership).when(membershipRepository).save(any(Membership.class));
 
         //when
-        Membership result = membershipService.addMembership(userId, membershipType, point);
+        final MembershipResponse result = membershipService.addMembership(userId, membershipType, point);
 
 
         //then
@@ -81,5 +82,9 @@ public class MembershipServiceTest {
         assertThat(result.getPoint()).isEqualTo(point);
         assertThat(result.getUserId()).isEqualTo(userId);
         assertThat(result.getCreatedAt()).isNotNull();
+
+        //verify
+        verify(membershipRepository, times(1)).findByUserIdAndMembershipType(userId, membershipType);
+        verify(membershipRepository, times(1)).save(any(Membership.class));
     }
 }
