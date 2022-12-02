@@ -6,12 +6,16 @@ import lombok.*;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
+/**
+ * Created by MinKyu Kim
+ * Created on 2022-11-29.
+ **/
+
 @Getter
 @Builder
 @AllArgsConstructor
-@NoArgsConstructor(force = true)
+@NoArgsConstructor
 public class MembershipRequest {
-
     @NotNull
     @Min(0)
     private Integer point;

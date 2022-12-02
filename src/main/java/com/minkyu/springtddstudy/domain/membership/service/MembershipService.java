@@ -33,7 +33,6 @@ public class MembershipService {
                 .build();
 
         Membership result = membershipRepository.save(membership);
-
         return MembershipResponse.builder()
                 .id(result.getId())
                 .userId(result.getUserId())

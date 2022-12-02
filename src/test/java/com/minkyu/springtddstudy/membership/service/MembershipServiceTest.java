@@ -72,7 +72,7 @@ public class MembershipServiceTest {
         doReturn(membership).when(membershipRepository).save(any(Membership.class));
 
         //when
-        MembershipResponse result = membershipService.addMembership(userId, membershipType, point);
+        final MembershipResponse result = membershipService.addMembership(userId, membershipType, point);
 
 
         //then
@@ -82,7 +82,6 @@ public class MembershipServiceTest {
         assertThat(result.getPoint()).isEqualTo(point);
         assertThat(result.getUserId()).isEqualTo(userId);
         assertThat(result.getCreatedAt()).isNotNull();
-
 
         //verify
         verify(membershipRepository, times(1)).findByUserIdAndMembershipType(userId, membershipType);
