@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class MembershipResponse {
+public class MembershipAddResponse {
     long id;
     String userId;
     MembershipType membershipType;

@@ -4,8 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.minkyu.springtddstudy.domain.membership.constant.MembershipConstants;
 import com.minkyu.springtddstudy.domain.membership.constant.MembershipType;
 import com.minkyu.springtddstudy.domain.membership.controller.MembershipController;
+import com.minkyu.springtddstudy.domain.membership.dto.MembershipDetailResponse;
 import com.minkyu.springtddstudy.domain.membership.dto.MembershipRequest;
-import com.minkyu.springtddstudy.domain.membership.dto.MembershipResponse;
+import com.minkyu.springtddstudy.domain.membership.dto.MembershipAddResponse;
 import com.minkyu.springtddstudy.domain.membership.error.GlobalExceptionHandler;
 import com.minkyu.springtddstudy.domain.membership.error.MembershipErrorResult;
 import com.minkyu.springtddstudy.domain.membership.error.MembershipException;
@@ -22,17 +23,19 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.boot.test.json.GsonTester;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MockMvcBuilder;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Stream;
 
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -98,7 +101,7 @@ public class MembershipControllerTest {
     public void errorThrownFromService() throws Exception {
         //given
         final String url = "/api/v1/memberships";
-        Mockito.doThrow(new MembershipException(MembershipErrorResult.DUPLICATED_MEMBERSHIP_REGISTER))
+        doThrow(new MembershipException(MembershipErrorResult.DUPLICATED_MEMBERSHIP_REGISTER))
                 .when(membershipService)
                 .addMembership("user1", MembershipType.NAVER, 1000);
 
@@ -119,7 +122,7 @@ public class MembershipControllerTest {
     public void membershipCreated() throws Exception {
         //given
         final String url = "/api/v1/memberships";
-        Mockito.doReturn(MembershipResponse.builder()
+        Mockito.doReturn(MembershipAddResponse.builder()
                 .id(1)
                 .userId("user1")
                 .point(1000)
@@ -137,14 +140,112 @@ public class MembershipControllerTest {
 
         //then
         resultActions.andExpect(status().isCreated());
-        final MembershipResponse response = mapper.readValue(resultActions.andReturn()
+        final MembershipAddResponse response = mapper.readValue(resultActions.andReturn()
                 .getResponse()
-                .getContentAsString(StandardCharsets.UTF_8), MembershipResponse.class);
+                .getContentAsString(StandardCharsets.UTF_8), MembershipAddResponse.class);
 
         Assertions.assertThat(response.getId()).isNotNull();
         Assertions.assertThat(response.getUserId()).isEqualTo("user1");
         Assertions.assertThat(response.getMembershipType()).isEqualTo(MembershipType.NAVER);
         Assertions.assertThat(response.getPoint()).isEqualTo(1000);
+    }
+
+    @Test
+    @DisplayName("멤버쉽 전체 리스트 조회 실패: userId 없음")
+    public void getAllMembershipWithNoUserId() throws Exception {
+        //given
+        final String url = "/api/v1/membership-list";
+
+        //when
+        final ResultActions resultActions = mockMvc.perform(
+                MockMvcRequestBuilders.get(url)
+        );
+
+        //then
+        resultActions.andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("멤버쉽 전체 리스트 조회 성공")
+    public void getAllMembership() throws Exception {
+        //given
+        final String url = "/api/v1/membership-list";
+        Mockito.doReturn(Arrays.asList(
+                MembershipDetailResponse.builder().build(),
+                MembershipDetailResponse.builder().build(),
+                MembershipDetailResponse.builder().build()
+        )).when(membershipService).getAllMembershipList("user1");
+
+        //when
+        final ResultActions resultActions = mockMvc.perform(
+                MockMvcRequestBuilders.get(url)
+                        .header(MembershipConstants.USER_ID_HEADER, "user1")
+        );
+
+        //then
+        resultActions.andExpect(status().is2xxSuccessful());
+        final List<MembershipDetailResponse> result = mapper.readValue(resultActions.andReturn()
+                .getResponse()
+                .getContentAsString(),
+                List.class
+        );
+        Assertions.assertThat(result.size()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("멤버십 상세 조회 실패: userId 없음")
+    public void getMembershipDetailFailedNoUserId() throws Exception {
+        //given
+        final String url = "/api/v1/membership/1";
+        //when
+        final ResultActions resultActions = mockMvc.perform(
+                MockMvcRequestBuilders.get(url)
+        );
+
+        //then
+        resultActions.andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("멤버십 상세 조회 실패: 멤버십 id 없음")
+    public void getMembershipDetailFailedNoMembership() throws Exception {
+        //given
+        final String url = "/api/v1/membership/1";
+        doThrow(new MembershipException(MembershipErrorResult.MEMBERSHIP_NOT_FOUND)).when(membershipService).getMembershipDetail(1,"user1");
+
+        //when
+        final ResultActions resultActions = mockMvc.perform(
+                MockMvcRequestBuilders.get(url)
+                        .header(MembershipConstants.USER_ID_HEADER, "user1")
+        );
+
+        //then
+        resultActions.andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("멤버십 상세 조회 성공")
+    public void getMembershipDetail() throws Exception {
+        //given
+        final String url = "/api/v1/membership/1";
+        doReturn(MembershipDetailResponse.builder()
+                .userId("user1")
+                .membershipType(MembershipType.NAVER)
+                .build()
+        ).when(membershipService).getMembershipDetail(1,"user1");
+
+        //when
+        final ResultActions resultActions = mockMvc.perform(
+                MockMvcRequestBuilders.get(url)
+                        .header(MembershipConstants.USER_ID_HEADER, "user1")
+        );
+
+        //then
+        resultActions.andExpect(status().is2xxSuccessful());
+        MembershipDetailResponse result = mapper.readValue(resultActions.andReturn().getResponse().getContentAsString(), MembershipDetailResponse.class);
+
+        Assertions.assertThat(result.getUserId()).isEqualTo("user1");
+        Assertions.assertThat(result.getMembershipType()).isEqualTo(MembershipType.NAVER);
     }
 
     private MembershipRequest createMembershipRequest(final Integer point, final MembershipType membershipType) {

@@ -2,7 +2,7 @@ package com.minkyu.springtddstudy.domain.membership.controller;
 
 import com.minkyu.springtddstudy.domain.membership.constant.MembershipConstants;
 import com.minkyu.springtddstudy.domain.membership.dto.MembershipRequest;
-import com.minkyu.springtddstudy.domain.membership.dto.MembershipResponse;
+import com.minkyu.springtddstudy.domain.membership.dto.MembershipAddResponse;
 import com.minkyu.springtddstudy.domain.membership.service.MembershipService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -26,8 +26,19 @@ public class MembershipController {
     @PostMapping("/memberships")
     public ResponseEntity<?> registerMembership(@RequestHeader(MembershipConstants.USER_ID_HEADER) final String userId,
                                                 @RequestBody @Valid final MembershipRequest membershipRequest) {
-        MembershipResponse response = membershipService.addMembership(userId, membershipRequest.getMembershipType(), membershipRequest.getPoint());
+        MembershipAddResponse response = membershipService.addMembership(userId, membershipRequest.getMembershipType(), membershipRequest.getPoint());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(response);
+    }
+
+    @GetMapping("/membership-list")
+    public ResponseEntity<?> getAllMembershipList(@RequestHeader(MembershipConstants.USER_ID_HEADER) final String userId) {
+        return ResponseEntity.ok(membershipService.getAllMembershipList(userId));
+    }
+
+    @GetMapping("/membership/{membershipId}")
+    public ResponseEntity<?> getMembershipDetail(@RequestHeader(MembershipConstants.USER_ID_HEADER) final String userId,
+                                                 @PathVariable long membershipId) {
+        return ResponseEntity.ok(membershipService.getMembershipDetail(membershipId, userId));
     }
 }
