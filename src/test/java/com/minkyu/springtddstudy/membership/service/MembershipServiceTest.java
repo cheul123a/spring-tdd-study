@@ -8,6 +8,7 @@ import com.minkyu.springtddstudy.domain.membership.error.MembershipException;
 import com.minkyu.springtddstudy.domain.membership.model.Membership;
 import com.minkyu.springtddstudy.domain.membership.repository.MembershipRepository;
 import com.minkyu.springtddstudy.domain.membership.service.MembershipService;
+import com.minkyu.springtddstudy.domain.membership.service.RatePointService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,6 +37,8 @@ public class MembershipServiceTest {
     private MembershipService membershipService;
     @Mock
     private MembershipRepository membershipRepository;
+    @Mock
+    private RatePointService ratePointService;
 
     private final String userId = "userId";
     private final MembershipType membershipType = MembershipType.NAVER;
@@ -185,6 +188,113 @@ public class MembershipServiceTest {
         //then
         assertThat(result.getUserId()).isEqualTo("user1");
         assertThat(result.getMembershipType()).isEqualTo(membershipType);
+    }
+
+
+    @Test
+    @DisplayName("멤버십 삭제 실패: 해당 ID의 멤버십 찾을 수 없음")
+    public void membershipDeleteFailedNotFound() {
+        //given
+        doReturn(Optional.empty())
+                .when(membershipRepository).findById(1L);
+        //when
+        MembershipException result = assertThrows(MembershipException.class, () -> membershipService.deleteMembership(1L, "user1"));
+
+        //then
+        assertThat(result.getErrorResult()).isEqualTo(MembershipErrorResult.MEMBERSHIP_NOT_FOUND);
+    }
+
+    @Test
+    @DisplayName("멤버십 삭제 실패: 멤버십이 본인것이 아님")
+    public void membershipDeleteFailedAccessDenied() {
+        //given
+        doReturn(Optional.of(Membership.builder()
+                        .id(1L)
+                        .membershipType(membershipType)
+                        .point(point)
+                        .userId("user2")
+                        .createdAt(LocalDateTime.now())
+                        .updatedAt(LocalDateTime.now())
+                        .build()))
+                .when(membershipRepository).findById(1L);
+        //when
+        MembershipException result = assertThrows(MembershipException.class, () -> membershipService.deleteMembership(1L, "user1"));
+
+        //then
+        assertThat(result.getErrorResult()).isEqualTo(MembershipErrorResult.MEMBERSHIP_NOT_FOUND);
+    }
+
+    @Test
+    @DisplayName("멤버십 삭제 성공")
+    public void membershipDeleteSuccess() {
+        //given
+        doReturn(Optional.of(Membership.builder()
+                        .id(1L)
+                        .membershipType(membershipType)
+                        .point(point)
+                        .userId("user1")
+                        .createdAt(LocalDateTime.now())
+                        .updatedAt(LocalDateTime.now())
+                        .build()))
+                .when(membershipRepository).findById(1L);
+        //when
+        membershipService.deleteMembership(1L, "user1");
+
+        //then
+
+    }
+
+    @Test
+    @DisplayName("멤버십 적립 실패: 해당 ID의 멤버십 찾을 수 없음")
+    public void membershipAccumulateFailedNotFound() {
+        //given
+        doReturn(Optional.empty())
+                .when(membershipRepository).findById(1L);
+        //when
+        MembershipException result = assertThrows(MembershipException.class, () -> membershipService.accumulateMembershipPoint(1L, "user1", 10000));
+
+        //then
+        assertThat(result.getErrorResult()).isEqualTo(MembershipErrorResult.MEMBERSHIP_NOT_FOUND);
+    }
+
+    @Test
+    @DisplayName("멤버십 적립 실패: 멤버십이 본인것이 아님")
+    public void membershipAccumulateFailedAccessDenied() {
+        //given
+        doReturn(Optional.of(Membership.builder()
+                .id(1L)
+                .membershipType(membershipType)
+                .point(point)
+                .userId("user2")
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build()))
+                .when(membershipRepository).findById(1L);
+        //when
+        MembershipException result = assertThrows(MembershipException.class, () -> membershipService.accumulateMembershipPoint(1L, "user1", 10000));
+
+        //then
+        assertThat(result.getErrorResult()).isEqualTo(MembershipErrorResult.MEMBERSHIP_NOT_FOUND);
+    }
+
+    @Test
+    @DisplayName("멤버십 적립 성공")
+    public void membershipAccumulateSuccess() {
+        //given
+        doReturn(Optional.of(Membership.builder()
+                .id(1L)
+                .membershipType(membershipType)
+                .point(point)
+                .userId("user1")
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build()))
+                .when(membershipRepository).findById(1L);
+        //when
+        membershipService.accumulateMembershipPoint(1L, "user1", 10000);
+
+        //then
+
     }
 
 

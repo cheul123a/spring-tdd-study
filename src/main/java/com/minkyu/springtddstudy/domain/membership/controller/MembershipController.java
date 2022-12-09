@@ -41,4 +41,11 @@ public class MembershipController {
                                                  @PathVariable long membershipId) {
         return ResponseEntity.ok(membershipService.getMembershipDetail(membershipId, userId));
     }
+
+    @DeleteMapping("/membership/{membershipId}")
+    public ResponseEntity<?> deleteMembership(@RequestHeader(MembershipConstants.USER_ID_HEADER) final String userId,
+                                              @PathVariable long membershipId) {
+        membershipService.deleteMembership(membershipId, userId);
+        return ResponseEntity.noContent().build();
+    }
 }

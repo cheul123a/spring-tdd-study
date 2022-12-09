@@ -103,4 +103,42 @@ public class MembershipRepositoryTest {
         //then
         assertThat(membershipList.size()).isEqualTo(2);
     }
+
+    @Test
+    @DisplayName("사용자 멤버십 삭제")
+    public void deleteMembership() {
+        //given
+        final Membership naverMembership = Membership.builder()
+                .userId("user1")
+                .membershipType(MembershipType.NAVER)
+                .point(10000)
+                .build();
+        Membership membership = membershipRepository.save(naverMembership);
+
+        //when
+        membershipRepository.deleteById(membership.getId());
+
+        //then
+        assertThat(membershipRepository.findById(membership.getId()).isPresent()).isEqualTo(false);
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }

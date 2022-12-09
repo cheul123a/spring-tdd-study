@@ -48,4 +48,8 @@ public class Membership {
     @LastModifiedDate
     @Column
     private LocalDateTime updatedAt;
+
+    public void updatePoint(int point) {
+        this.point = point;
+    }
 }

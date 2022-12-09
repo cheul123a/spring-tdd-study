@@ -248,6 +248,35 @@ public class MembershipControllerTest {
         Assertions.assertThat(result.getMembershipType()).isEqualTo(MembershipType.NAVER);
     }
 
+    @Test
+    @DisplayName("멤버십 삭제 실패: 사용자 ID 없음")
+    public void membershipDeleteFailedNoUserId() throws Exception {
+        //given
+        final String url = "/api/v1/membership/1";
+        //when
+        final ResultActions resultActions = mockMvc.perform(
+                MockMvcRequestBuilders.delete(url)
+        );
+
+        //then
+        resultActions.andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("멤버십 삭제 성공")
+    public void membershipDeleteSuccess() throws Exception {
+        //given
+        final String url = "/api/v1/membership/1";
+        //when
+        final ResultActions resultActions = mockMvc.perform(
+                MockMvcRequestBuilders.delete(url)
+                        .header(MembershipConstants.USER_ID_HEADER, "user1")
+        );
+
+        //then
+        resultActions.andExpect(status().isNoContent());
+    }
+
     private MembershipRequest createMembershipRequest(final Integer point, final MembershipType membershipType) {
         return MembershipRequest.builder()
                 .point(point)

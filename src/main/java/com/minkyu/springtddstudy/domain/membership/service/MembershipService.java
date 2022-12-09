@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 public class MembershipService {
 
     private final MembershipRepository membershipRepository;
+    private final PointService pointService;
 
     public MembershipAddResponse addMembership(String userId, MembershipType membershipType, Integer point) {
         Membership membership = membershipRepository.findByUserIdAndMembershipType(userId, membershipType);
@@ -78,5 +79,30 @@ public class MembershipService {
                 .createdAt(result.getCreatedAt())
                 .updatedAt(result.getUpdatedAt())
                 .build();
+    }
+
+    public void deleteMembership(long membershipId, String userId) {
+        Membership membership = membershipRepository.findById(membershipId).orElseThrow(
+                () -> new MembershipException(MembershipErrorResult.MEMBERSHIP_NOT_FOUND)
+        );
+
+        if(!membership.getUserId().equals(userId)) {
+            throw new MembershipException(MembershipErrorResult.MEMBERSHIP_NOT_FOUND);
+        }
+
+        membershipRepository.deleteById(membership.getId());
+    }
+
+    public void accumulateMembershipPoint(long membershipId, String userId, int price) {
+        Membership membership = membershipRepository.findById(membershipId).orElseThrow(
+                () -> new MembershipException(MembershipErrorResult.MEMBERSHIP_NOT_FOUND)
+        );
+
+        if(!membership.getUserId().equals(userId)) {
+            throw new MembershipException(MembershipErrorResult.MEMBERSHIP_NOT_FOUND);
+        }
+
+        membership.updatePoint(membership.getPoint() + pointService.calculatePoint(price));
+        membershipRepository.save(membership);
     }
 }
