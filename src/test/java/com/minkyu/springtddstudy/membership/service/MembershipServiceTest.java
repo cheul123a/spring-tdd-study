@@ -294,7 +294,6 @@ public class MembershipServiceTest {
         membershipService.accumulateMembershipPoint(1L, "user1", 10000);
 
         //then
-
     }
 
 

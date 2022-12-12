@@ -9,6 +9,7 @@ import com.minkyu.springtddstudy.domain.membership.model.Membership;
 import com.minkyu.springtddstudy.domain.membership.repository.MembershipRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -20,11 +21,13 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class MembershipService {
 
     private final MembershipRepository membershipRepository;
-    private final PointService pointService;
+    private final PointService ratePointService;
 
+    @Transactional
     public MembershipAddResponse addMembership(String userId, MembershipType membershipType, Integer point) {
         Membership membership = membershipRepository.findByUserIdAndMembershipType(userId, membershipType);
         if(membership != null) {
@@ -81,6 +84,7 @@ public class MembershipService {
                 .build();
     }
 
+    @Transactional
     public void deleteMembership(long membershipId, String userId) {
         Membership membership = membershipRepository.findById(membershipId).orElseThrow(
                 () -> new MembershipException(MembershipErrorResult.MEMBERSHIP_NOT_FOUND)
@@ -93,6 +97,7 @@ public class MembershipService {
         membershipRepository.deleteById(membership.getId());
     }
 
+    @Transactional
     public void accumulateMembershipPoint(long membershipId, String userId, int price) {
         Membership membership = membershipRepository.findById(membershipId).orElseThrow(
                 () -> new MembershipException(MembershipErrorResult.MEMBERSHIP_NOT_FOUND)
@@ -102,7 +107,7 @@ public class MembershipService {
             throw new MembershipException(MembershipErrorResult.MEMBERSHIP_NOT_FOUND);
         }
 
-        membership.updatePoint(membership.getPoint() + pointService.calculatePoint(price));
+        membership.updatePoint(membership.getPoint() + ratePointService.calculatePoint(price));
         membershipRepository.save(membership);
     }
 }

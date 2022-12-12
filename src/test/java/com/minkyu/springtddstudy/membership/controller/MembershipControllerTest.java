@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.minkyu.springtddstudy.domain.membership.constant.MembershipConstants;
 import com.minkyu.springtddstudy.domain.membership.constant.MembershipType;
 import com.minkyu.springtddstudy.domain.membership.controller.MembershipController;
+import com.minkyu.springtddstudy.domain.membership.dto.MembershipAccumulateRequest;
 import com.minkyu.springtddstudy.domain.membership.dto.MembershipDetailResponse;
 import com.minkyu.springtddstudy.domain.membership.dto.MembershipRequest;
 import com.minkyu.springtddstudy.domain.membership.dto.MembershipAddResponse;
@@ -277,10 +278,85 @@ public class MembershipControllerTest {
         resultActions.andExpect(status().isNoContent());
     }
 
+
+    @Test
+    @DisplayName("멤버십 적립 실패: 사용자 ID 없음")
+    public void membershipAccumulateFailedNoUserId() throws Exception {
+        //given
+        final String url = "/api/v1/membership/1/accmulate";
+        //when
+        final ResultActions resultActions = mockMvc.perform(
+                MockMvcRequestBuilders.post(url)
+                        .content(mapper.writeValueAsString(createAccumulateRequest(1000)))
+                        .contentType(MediaType.APPLICATION_JSON)
+        );
+
+        //then
+        resultActions.andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("멤버십 적립 실패: 멤버십 없음")
+    public void membershipAccumulateFailedNoMembership() throws Exception {
+        //given
+        final String url = "/api/v1/membership/1/accmulate";
+
+        //when
+        final ResultActions resultActions = mockMvc.perform(
+                MockMvcRequestBuilders.post(url)
+                        .header(MembershipConstants.USER_ID_HEADER, "1234")
+        );
+
+        //then
+        resultActions.andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("멤버십 적립 실패: 포인트가 음수")
+    public void membershipAccumulateFailedMinusPoint() throws Exception {
+        //given
+        final String url = "/api/v1/membership/1/accmulate";
+
+        //when
+        final ResultActions resultActions = mockMvc.perform(
+                MockMvcRequestBuilders.post(url)
+                        .header(MembershipConstants.USER_ID_HEADER, "1234")
+                        .content(mapper.writeValueAsString(createAccumulateRequest(-1)))
+                        .contentType(MediaType.APPLICATION_JSON)
+        );
+
+        //then
+        resultActions.andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("멤버십 적립 성공")
+    public void membershipAccumulate() throws Exception {
+        //given
+        final String url = "/api/v1/membership/1/accmulate";
+
+        //when
+        final ResultActions resultActions = mockMvc.perform(
+                MockMvcRequestBuilders.post(url)
+                        .header(MembershipConstants.USER_ID_HEADER, "1234")
+                        .content(mapper.writeValueAsString(createAccumulateRequest(1000)))
+                        .contentType(MediaType.APPLICATION_JSON)
+        );
+
+        //then
+        resultActions.andExpect(status().isNoContent());
+    }
+
     private MembershipRequest createMembershipRequest(final Integer point, final MembershipType membershipType) {
         return MembershipRequest.builder()
                 .point(point)
                 .membershipType(membershipType)
+                .build();
+    }
+
+    private MembershipAccumulateRequest createAccumulateRequest(final Integer price) {
+        return MembershipAccumulateRequest.builder()
+                .price(price)
                 .build();
     }
 

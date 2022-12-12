@@ -1,6 +1,7 @@
 package com.minkyu.springtddstudy.domain.membership.controller;
 
 import com.minkyu.springtddstudy.domain.membership.constant.MembershipConstants;
+import com.minkyu.springtddstudy.domain.membership.dto.MembershipAccumulateRequest;
 import com.minkyu.springtddstudy.domain.membership.dto.MembershipRequest;
 import com.minkyu.springtddstudy.domain.membership.dto.MembershipAddResponse;
 import com.minkyu.springtddstudy.domain.membership.service.MembershipService;
@@ -46,6 +47,14 @@ public class MembershipController {
     public ResponseEntity<?> deleteMembership(@RequestHeader(MembershipConstants.USER_ID_HEADER) final String userId,
                                               @PathVariable long membershipId) {
         membershipService.deleteMembership(membershipId, userId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/membership/{membershipId}/accmulate")
+    public ResponseEntity<?> accmulateMembership(@RequestHeader(MembershipConstants.USER_ID_HEADER) final String userId,
+                                                 @PathVariable long membershipId,
+                                                 @RequestBody @Valid final MembershipAccumulateRequest membershipAccumulateRequest) {
+        membershipService.accumulateMembershipPoint(membershipId, userId, membershipAccumulateRequest.getPrice());
         return ResponseEntity.noContent().build();
     }
 }
